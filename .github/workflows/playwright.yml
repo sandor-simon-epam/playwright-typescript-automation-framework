@@ -49,6 +49,16 @@ jobs:
         run: |
           mkdir -p allure-report/history
           npx allure@latest generate allure-results -o allure-report
+      - name: Verify Allure report generated
+        if: ${{ !cancelled() }}
+        run: |
+          if [ ! -f allure-report/index.html ]; then
+            echo "Warning: Allure report index.html not found"
+            echo "Directory contents:"
+            ls -la allure-report/ || true
+          else
+            echo "✓ Allure report generated successfully"
+          fi
       - name: Upload Playwright HTML report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -65,13 +75,13 @@ jobs:
           retention-days: 30
       - name: Upload Allure report to Pages
         uses: actions/upload-pages-artifact@v3
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && hashFiles('allure-report/index.html') != '' }}
         with:
           path: allure-report/
 
   deploy:
     needs: test
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && hashFiles('allure-report/index.html') != '' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
