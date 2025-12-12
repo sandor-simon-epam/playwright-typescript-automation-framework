@@ -25,6 +25,13 @@ jobs:
         run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+      - name: Restore Allure history
+        uses: actions/cache@v4
+        with:
+          path: allure-report/history
+          key: allure-history-${{ github.ref }}
+          restore-keys: |
+            allure-history-
       - name: Lint code
         run: npx eslint .
       - name: Format check
@@ -39,7 +46,9 @@ jobs:
           check_name: Playwright Test Results
       - name: Generate Allure report
         if: ${{ !cancelled() }}
-        run: npx allure@latest generate allure-results -o allure-report
+        run: |
+          mkdir -p allure-report/history
+          npx allure@latest generate allure-results -o allure-report
       - name: Upload Playwright HTML report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

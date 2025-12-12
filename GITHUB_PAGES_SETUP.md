@@ -87,7 +87,7 @@ npm run allure:generate
 - 📝 Detailed test steps and logs
 - 🖼️ Screenshots and attachments
 - ⏱️ Execution time metrics
-- 📈 Historical trends across runs
+- 📈 Historical trends across runs (cached between workflows)
 
 ## Troubleshooting
 
@@ -121,7 +121,8 @@ permissions:
 
 - **Artifacts**: Stored for 30 days
 - **GitHub Pages**: Latest deployment replaces previous
-- **Historical data**: Overwritten on each main branch deployment
+- **Allure History**: Cached between workflow runs for trend tracking
+- **Historical data**: Persisted via GitHub Actions cache, can be cleared manually
 
 ### Customize Report Generation
 
