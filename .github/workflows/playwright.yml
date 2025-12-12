@@ -40,7 +40,7 @@ jobs:
       - name: Generate Allure report
         if: ${{ !cancelled() }}
         run: |
-          npx allure@latest generate allure-results --clean -o allure-report
+          npx allure@latest generate allure-results -o allure-report
       - name: Restore Allure history for trends
         if: ${{ !cancelled() }}
         uses: actions/cache@v4
