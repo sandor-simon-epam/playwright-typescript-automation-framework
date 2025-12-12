@@ -3,6 +3,7 @@
 
 const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
+const prettierConfig = require('eslint-config-prettier');
 
 module.exports = [
   // Base ESLint recommended rules
@@ -10,6 +11,9 @@ module.exports = [
 
   // TypeScript ESLint recommended rules
   ...tseslint.configs.recommended,
+
+  // Prettier config (must be last to disable conflicting rules)
+  prettierConfig,
 
   // Global configuration
   {
@@ -33,8 +37,6 @@ module.exports = [
     },
 
     rules: {
-      semi: ['error', 'always'],
-      quotes: ['error', 'single'],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-unused-vars': ['warn'],
