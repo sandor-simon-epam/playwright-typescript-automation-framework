@@ -75,13 +75,13 @@ jobs:
           retention-days: 30
       - name: Upload Allure report to Pages
         uses: actions/upload-pages-artifact@v3
-        if: ${{ !cancelled() && hashFiles('allure-report/index.html') != '' }}
+        if: ${{ !cancelled() }}
         with:
           path: allure-report/
 
   deploy:
     needs: test
-    if: ${{ !cancelled() && hashFiles('allure-report/index.html') != '' }}
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
