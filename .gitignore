@@ -194,4 +194,8 @@ Thumbs.db
 *.orig
 debug.log
 
-*allure*
+# Allure generated reports and results (but keep scripts)
+allure-results/
+allure-report/
+.allure/
+!scripts/generate-allure-report.js
