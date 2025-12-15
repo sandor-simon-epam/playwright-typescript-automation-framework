@@ -78,29 +78,13 @@ if (!fs.existsSync('allure-report/index.html')) {
   const versionedDir = reportDir.find((f) => fs.statSync(`allure-report/${f}`).isDirectory());
 
   if (versionedDir && fs.existsSync(`allure-report/${versionedDir}/index.html`)) {
-    console.log(`  Found report in allure-report/${versionedDir}/`);
-    console.log(`  Moving to root...`);
-    // Move versioned directory contents to root
-    const sourceDir = `allure-report/${versionedDir}`;
-    const files = execSync(`find "${sourceDir}" -type f`, {
-      encoding: 'utf-8',
-      stdio: 'pipe',
-    }).split('\n');
-
-    files.forEach((file) => {
-      if (!file) return;
-      const relative = file.replace(sourceDir + '/', '');
-      const target = `allure-report/${relative}`;
-      const targetDir = target.substring(0, target.lastIndexOf('/'));
-      try {
-        execSync(`mkdir -p "${targetDir}" && cp "${file}" "${target}"`, {
-          stdio: 'pipe',
-        });
-      } catch (e) {
-        console.error(`Failed to copy ${file}`);
-      }
-    });
-    console.log('✓ Report files moved to root');
+    console.log(`  Found report in allure-report/${versionedDir}/ - flattening structure...`);
+    // Move versioned directory contents to root by renaming
+    const tempDir = 'allure-report-temp';
+    execSync(`mv allure-report/${versionedDir} ${tempDir}`, { stdio: 'pipe' });
+    execSync(`rm -rf allure-report`);
+    execSync(`mv ${tempDir} allure-report`);
+    console.log('✓ Report structure flattened');
   } else {
     console.error('✗ Report generation failed - index.html not found');
     console.log('\n📁 Directory structure:');
