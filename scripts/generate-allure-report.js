@@ -100,52 +100,110 @@ try {
 }
 
 // Verify report was created
-if (!fs.existsSync('allure-report/index.html')) {
-  console.log('  index.html not found at root, checking for versioned directories...');
-  // Allure 3.0 may create versioned subdirectories like awesome/
-  const reportDir = fs.readdirSync('allure-report');
-  console.log(`  Directories in allure-report: ${reportDir.join(', ')}`);
-  const versionedDir = reportDir.find((f) => fs.statSync(`allure-report/${f}`).isDirectory());
+console.log('\n🔍 Verifying report generation...');
+console.log(`  Checking allure-report/index.html...`);
 
-  if (versionedDir && fs.existsSync(`allure-report/${versionedDir}/index.html`)) {
-    console.log(`  Found report in allure-report/${versionedDir}/ - flattening structure...`);
+if (!fs.existsSync('allure-report/index.html')) {
+  console.log('  ✗ index.html not found at root');
+
+  // Show all files in allure-report
+  const reportDir = fs.readdirSync('allure-report');
+  console.log(`  📂 Contents of allure-report: ${reportDir.join(', ')}`);
+
+  // Check if any subdirectories exist
+  const dirs = reportDir.filter((f) => {
+    const fullPath = `allure-report/${f}`;
+    try {
+      return fs.statSync(fullPath).isDirectory();
+    } catch {
+      return false;
+    }
+  });
+  console.log(`  📁 Subdirectories found: ${dirs.join(', ') || '(none)'}`);
+
+  if (dirs.length === 0) {
+    console.error('✗ No subdirectories found - Allure generation may have failed');
+    console.error('⚠ Aborting flattening attempt');
+    process.exit(1);
+  }
+
+  // Find the versioned directory (assume first non-.gitkeep directory)
+  const versionedDir = dirs.find((f) => f !== '.gitkeep' && !f.startsWith('.'));
+  console.log(`  🎯 Targeting directory: ${versionedDir}`);
+
+  if (versionedDir) {
+    const indexPath = `allure-report/${versionedDir}/index.html`;
+    console.log(`  Checking ${indexPath}...`);
+
+    if (!fs.existsSync(indexPath)) {
+      console.log(`  ✗ index.html not found in ${versionedDir}`);
+      console.log(`  📋 Contents of allure-report/${versionedDir}:`);
+      try {
+        const subContents = fs.readdirSync(`allure-report/${versionedDir}`);
+        console.log(
+          `     ${subContents.slice(0, 10).join(', ')}${subContents.length > 10 ? '...' : ''}`,
+        );
+      } catch (e) {
+        console.error(`     Error reading directory: ${e.message}`);
+      }
+      process.exit(1);
+    }
+
+    console.log(`  ✓ Found ${indexPath}`);
+    console.log('  🔄 Starting flattening process...');
+
     // Move versioned directory contents to root using Node.js file operations
     const sourceDir = `allure-report/${versionedDir}`;
     const tempDir = 'allure-report-temp';
 
-    console.log(`  Copying ${sourceDir} to ${tempDir}...`);
-    // Copy source to temp
-    copyDir(sourceDir, tempDir);
-    console.log(`  ✓ Copy complete, removing original allure-report...`);
+    console.log(`  Step 1: Copying ${sourceDir} → ${tempDir}...`);
+    try {
+      copyDir(sourceDir, tempDir);
+      console.log(`  ✓ Copy successful`);
+    } catch (copyErr) {
+      console.error(`  ✗ Copy failed: ${copyErr.message}`);
+      process.exit(1);
+    }
 
-    // Remove original allure-report
-    removeDir('allure-report');
-    console.log(`  ✓ Original removed, renaming temp to allure-report...`);
+    console.log(`  Step 2: Removing original allure-report...`);
+    try {
+      removeDir('allure-report');
+      console.log(`  ✓ Removal successful`);
+    } catch (removeErr) {
+      console.error(`  ✗ Removal failed: ${removeErr.message}`);
+      process.exit(1);
+    }
 
-    // Move temp to allure-report
-    fs.renameSync(tempDir, 'allure-report');
-    console.log(`  ✓ Rename complete, verifying...`);
+    console.log(`  Step 3: Renaming ${tempDir} → allure-report...`);
+    try {
+      fs.renameSync(tempDir, 'allure-report');
+      console.log(`  ✓ Rename successful`);
+    } catch (renameErr) {
+      console.error(`  ✗ Rename failed: ${renameErr.message}`);
+      process.exit(1);
+    }
 
+    console.log(`  Step 4: Verifying index.html at root...`);
     if (fs.existsSync('allure-report/index.html')) {
-      console.log('✓ Report structure flattened successfully');
+      console.log('  ✓ Index.html verified at root');
+      console.log('✅ Report structure flattened successfully');
     } else {
-      console.error('✗ Flattening failed - index.html still not found');
+      console.error('✗ Flattening failed - index.html still not found at root');
+      console.log('  📁 Current structure:');
+      try {
+        const finalContents = fs.readdirSync('allure-report');
+        console.log(`     ${finalContents.slice(0, 10).join(', ')}`);
+      } catch (e) {
+        console.error(`     Error: ${e.message}`);
+      }
       process.exit(1);
     }
   } else {
-    console.error('✗ Report generation failed - index.html not found');
-    console.log('\n📁 Directory structure:');
-    try {
-      const files = execSync('find allure-report -type f | sort', {
-        encoding: 'utf-8',
-        stdio: 'pipe',
-      });
-      console.log(files || '(empty)');
-    } catch {
-      console.log('allure-report directory not found or error reading');
-    }
+    console.error('✗ No valid versioned directory found');
     process.exit(1);
   }
+} else {
+  console.log('  ✓ index.html found at root - no flattening needed');
 }
 
 // Then copy history file if it exists (for future trend data)
