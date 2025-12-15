@@ -50,17 +50,23 @@ jobs:
       - name: Verify Allure report generated
         if: ${{ !cancelled() }}
         run: |
-          echo "Allure report directory contents:"
-          ls -la allure-report/ || echo "Directory does not exist"
+          echo "=== Checking allure-results ==="
+          ls -la allure-results/ 2>/dev/null | head -10 || echo "No allure-results"
           echo ""
+          echo "=== Checking allure-report ==="
+          ls -la allure-report/ 2>/dev/null || echo "No allure-report directory"
+          echo ""
+          echo "=== Checking index.html ==="
           if [ -f allure-report/index.html ]; then
-            echo "✓ Allure report index.html found"
+            echo "✓ Found index.html"
             wc -c allure-report/index.html
           else
-            echo "✗ Allure report index.html NOT found"
-            echo "Checking for allure-results:"
-            ls -la allure-results/ 2>/dev/null || echo "No allure-results directory"
+            echo "✗ index.html NOT found"
+            find allure-report -name "*.html" 2>/dev/null || echo "No HTML files found"
           fi
+          echo ""
+          echo "=== Full directory tree ==="
+          find allure-report -type f 2>/dev/null | head -20
       - name: Upload Playwright HTML report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
