@@ -10,8 +10,9 @@
     "test:api": "npx playwright test --project=api",
     "lint": "npx eslint .",
     "format": "npx prettier --check .",
-    "allure:serve": "npx allure serve allure-results",
-    "allure:generate": "npx allure@latest generate allure-results -o allure-report"
+    "allure:serve": "npx allure open allure-report",
+    "allure:generate": "npx allure@latest generate allure-results -o allure-report",
+    "allure": "node scripts/generate-allure-report.js"
   },
   "repository": {
     "type": "git",
