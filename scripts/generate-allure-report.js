@@ -72,18 +72,49 @@ try {
 
 // Verify report was created
 if (!fs.existsSync('allure-report/index.html')) {
-  console.error('✗ Report generation failed - index.html not found');
-  console.log('\n📁 Directory structure:');
-  try {
-    const files = execSync('find allure-report -type f | sort', {
+  console.log('  index.html not found at root, checking for versioned directories...');
+  // Allure 3.0 may create versioned subdirectories like awesome/
+  const reportDir = fs.readdirSync('allure-report');
+  const versionedDir = reportDir.find((f) => fs.statSync(`allure-report/${f}`).isDirectory());
+
+  if (versionedDir && fs.existsSync(`allure-report/${versionedDir}/index.html`)) {
+    console.log(`  Found report in allure-report/${versionedDir}/`);
+    console.log(`  Moving to root...`);
+    // Move versioned directory contents to root
+    const sourceDir = `allure-report/${versionedDir}`;
+    const files = execSync(`find "${sourceDir}" -type f`, {
       encoding: 'utf-8',
       stdio: 'pipe',
+    }).split('\n');
+
+    files.forEach((file) => {
+      if (!file) return;
+      const relative = file.replace(sourceDir + '/', '');
+      const target = `allure-report/${relative}`;
+      const targetDir = target.substring(0, target.lastIndexOf('/'));
+      try {
+        execSync(`mkdir -p "${targetDir}" && cp "${file}" "${target}"`, {
+          stdio: 'pipe',
+        });
+      } catch (e) {
+        console.error(`Failed to copy ${file}`);
+      }
     });
-    console.log(files || '(empty)');
-  } catch (e) {
-    console.log('allure-report directory not found or error reading');
+    console.log('✓ Report files moved to root');
+  } else {
+    console.error('✗ Report generation failed - index.html not found');
+    console.log('\n📁 Directory structure:');
+    try {
+      const files = execSync('find allure-report -type f | sort', {
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      });
+      console.log(files || '(empty)');
+    } catch (e) {
+      console.log('allure-report directory not found or error reading');
+    }
+    process.exit(1);
   }
-  process.exit(1);
 }
 
 // Then copy history file if it exists (for future trend data)
