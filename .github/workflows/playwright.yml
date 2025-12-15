@@ -28,7 +28,7 @@ jobs:
       - name: Restore Allure history for trends
         uses: actions/cache@v4
         with:
-          path: .allure/history.jsonl
+          path: .allure
           key: allure-history-${{ github.ref }}
           restore-keys: |
             allure-history-
@@ -90,7 +90,7 @@ jobs:
         uses: actions/cache/save@v4
         if: ${{ !cancelled() }}
         with:
-          path: .allure/history.jsonl
+          path: .allure
           key: allure-history-${{ github.ref }}
 
   deploy:

@@ -125,12 +125,24 @@ try {
   if (fs.existsSync(sourceFile)) {
     fs.mkdirSync(historyDir, { recursive: true });
     fs.copyFileSync(sourceFile, targetFile);
-    console.log('✓ Allure history copied for next run');
+    console.log('✓ Allure history copied to report');
   } else {
     console.log('ℹ History file not found (first run)');
   }
 } catch (error) {
   console.error('✗ Error copying history:', error.message);
+  process.exit(1);
+}
+
+// Save updated history back to .allure/ for next run
+try {
+  fs.mkdirSync('.allure', { recursive: true });
+  if (fs.existsSync(targetFile)) {
+    fs.copyFileSync(targetFile, sourceFile);
+    console.log('✓ History saved for next run');
+  }
+} catch (error) {
+  console.error('✗ Error saving history:', error.message);
   process.exit(1);
 }
 
