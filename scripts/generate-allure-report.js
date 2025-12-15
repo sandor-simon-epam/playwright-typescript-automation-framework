@@ -11,7 +11,7 @@ const sourceFile = '.allure/history.jsonl';
 console.log('📊 Generating Allure report...');
 try {
   const output = execSync(
-    'npx allure@3.0.0-beta.27 generate allure-results -o allure-report 2>&1',
+    'npx allure@latest generate allure-results -o allure-report 2>&1',
     {
       encoding: 'utf-8',
     },
