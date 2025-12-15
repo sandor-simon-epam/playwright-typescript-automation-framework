@@ -33,18 +33,40 @@ if (resultsCount === 0) {
 
 // Generate report first
 console.log('📊 Generating Allure report...');
+console.log('  Input: allure-results/');
+try {
+  const inputFiles = execSync('find allure-results -type f 2>/dev/null | wc -l', {
+    encoding: 'utf-8',
+    stdio: 'pipe',
+  });
+  console.log(`  Files found: ${inputFiles.trim()}`);
+} catch (e) {
+  console.log('  Could not count files');
+}
+
 try {
   const output = execSync('npx allure@latest generate allure-results -o allure-report', {
     encoding: 'utf-8',
     stdio: 'pipe',
   });
-  console.log(output);
-  console.log('✓ Report generated successfully\n');
+  if (output) console.log(output);
+  console.log('✓ Report generated successfully');
+
+  console.log('  Output: allure-report/');
+  try {
+    const outputFiles = execSync('find allure-report -type f 2>/dev/null | wc -l', {
+      encoding: 'utf-8',
+      stdio: 'pipe',
+    });
+    console.log(`  Files generated: ${outputFiles.trim()}`);
+  } catch (e) {
+    console.log('  Could not count files');
+  }
 } catch (error) {
   console.error('✗ Error generating report:');
   console.error(error.message);
-  if (error.stdout) console.error(error.stdout);
-  if (error.stderr) console.error(error.stderr);
+  if (error.stdout) console.error('STDOUT:', error.stdout);
+  if (error.stderr) console.error('STDERR:', error.stderr);
   process.exit(1);
 }
 
