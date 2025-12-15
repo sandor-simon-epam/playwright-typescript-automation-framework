@@ -34,29 +34,32 @@ if (resultsCount === 0) {
 // Generate report first
 console.log('📊 Generating Allure report...');
 try {
-  const output = execSync('npx allure@latest generate allure-results -o allure-report 2>&1', {
+  const output = execSync('npx allure@latest generate allure-results -o allure-report', {
     encoding: 'utf-8',
+    stdio: 'pipe',
   });
   console.log(output);
   console.log('✓ Report generated successfully\n');
 } catch (error) {
   console.error('✗ Error generating report:');
   console.error(error.message);
-  console.error(error.stdout);
+  if (error.stdout) console.error(error.stdout);
+  if (error.stderr) console.error(error.stderr);
   process.exit(1);
 }
 
 // Verify report was created
 if (!fs.existsSync('allure-report/index.html')) {
   console.error('✗ Report generation failed - index.html not found');
-  console.log('Directory contents:');
+  console.log('\n📁 Directory structure:');
   try {
-    const files = execSync('find allure-report -type f 2>/dev/null', {
+    const files = execSync('find allure-report -type f | sort', {
       encoding: 'utf-8',
+      stdio: 'pipe',
     });
-    console.log(files);
+    console.log(files || '(empty)');
   } catch (e) {
-    console.log('allure-report directory not found');
+    console.log('allure-report directory not found or error reading');
   }
   process.exit(1);
 }
