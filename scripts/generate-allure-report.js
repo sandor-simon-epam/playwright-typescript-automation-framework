@@ -10,12 +10,33 @@ const sourceFile = '.allure/history.jsonl';
 // Generate report first
 console.log('📊 Generating Allure report...');
 try {
-  execSync('npx allure@latest generate allure-results -o allure-report', {
-    stdio: 'inherit',
-  });
+  const output = execSync(
+    'npx allure@3.0.0-beta.27 generate allure-results -o allure-report 2>&1',
+    {
+      encoding: 'utf-8',
+    },
+  );
+  console.log(output);
   console.log('✓ Report generated successfully\n');
 } catch (error) {
-  console.error('✗ Error generating report:', error.message);
+  console.error('✗ Error generating report:');
+  console.error(error.message);
+  console.error(error.stdout);
+  process.exit(1);
+}
+
+// Verify report was created
+if (!fs.existsSync('allure-report/index.html')) {
+  console.error('✗ Report generation failed - index.html not found');
+  console.log('Directory contents:');
+  try {
+    const files = execSync('find allure-report -type f 2>/dev/null', {
+      encoding: 'utf-8',
+    });
+    console.log(files);
+  } catch (e) {
+    console.log('allure-report directory not found');
+  }
   process.exit(1);
 }
 
