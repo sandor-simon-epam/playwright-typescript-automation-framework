@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+coverage
+allure-results
+allure-report
+.next
+.nuxt
+out
+.cache
+test-results
+.env
+.env.local
+.env.*.local
+playwright-report

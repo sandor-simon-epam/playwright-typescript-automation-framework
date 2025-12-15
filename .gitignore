@@ -6,6 +6,11 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -147,4 +152,50 @@ vite.config.ts.timestamp-*
 /playwright/.auth/
 
 allure-results/
+**/mcp.json
+test-results.json
 
+# Auth and storage state files (generated per environment)
+.auth/
+!.auth/README.md
+
+# Documentation and notes
+*.md
+!README.md
+!CONTRIBUTING.md
+!LICENSE.md
+!tests/fixtures/FIXTURE_USAGE.md
+
+# PowerShell scripts
+*.ps1
+*.ps2
+*.psc1
+*.psc2
+
+# Windows/OS files
+Thumbs.db
+.DS_Store
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# IDE and editor files
+*.sublime-project
+*.sublime-workspace
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Miscellaneous development files
+.history/
+*.orig
+debug.log
+
+# Allure generated reports and results (but keep scripts)
+allure-results/
+allure-report/
+.allure/
+!scripts/generate-allure-report.js

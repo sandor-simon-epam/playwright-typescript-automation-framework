@@ -5,10 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "npx playwright test",
+    "test:setup": "npx playwright test --project=setup",
+    "test:e2e": "npx playwright test --project=e2e",
+    "test:api": "npx playwright test --project=api",
     "lint": "npx eslint .",
     "format": "npx prettier --check .",
-    "allure:serve": "npx allure serve allure-results",
-    "allure:generate": "npx allure generate allure-results --clean -o allure-report"
+    "allure:serve": "npx allure open allure-report",
+    "allure:generate": "npx allure@latest generate allure-results -o allure-report",
+    "allure": "node scripts/generate-allure-report.js"
   },
   "repository": {
     "type": "git",
@@ -23,12 +27,18 @@
   },
   "homepage": "https://github.com/k0libri/playwright-typescript-automation-framework#readme",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@playwright/mcp": "^0.0.49",
     "@playwright/test": "^1.57.0",
     "@types/node": "^24.10.1",
     "allure-playwright": "^3.4.3",
     "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
-    "prettier": "^3.7.4"
+    "prettier": "^3.7.4",
+    "typescript-eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
   }
 }

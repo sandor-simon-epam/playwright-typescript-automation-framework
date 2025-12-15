@@ -1,41 +1,108 @@
 name: Playwright Tests
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Lint code
-      run: npx eslint .
-    - name: Format check
-      run: npx prettier --check .
-    - name: Run Playwright tests
-      run: npx playwright test
-    - name: Generate Allure report
-      run: npx allure generate allure-results --clean -o allure-report
-    - name: Upload Playwright HTML report
-      uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
-    - name: Upload Allure report
-      uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: allure-report
-        path: allure-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Restore Allure history for trends
+        id: cache-restore
+        uses: actions/cache@v4
+        with:
+          path: .allure
+          key: allure-history-${{ github.ref }}-${{ github.run_number }}
+          restore-keys: |
+            allure-history-${{ github.ref }}-
+            allure-history-
+      - name: Lint code
+        run: npx eslint .
+      - name: Format check
+        run: npx prettier --check .
+      - name: Run Playwright tests
+        run: npx playwright test
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: ${{ !cancelled() }}
+        with:
+          files: test-results/junit.xml
+          check_name: Playwright Test Results
+      - name: Generate Allure report
+        if: ${{ !cancelled() }}
+        run: node scripts/generate-allure-report.js
+      - name: Verify Allure report generated
+        if: ${{ !cancelled() }}
+        run: |
+          echo "=== Checking allure-results ==="
+          ls -lR allure-results/ 2>/dev/null | head -20 || echo "No allure-results"
+          echo ""
+          echo "=== Checking allure-report root ==="
+          ls -lR allure-report/ 2>/dev/null | head -30 || echo "No allure-report directory"
+          echo ""
+          echo "=== Checking for index.html ==="
+          find allure-report -name "index.html" 2>/dev/null && echo "✓ Found index.html" || echo "✗ index.html NOT found"
+          echo ""
+          echo "=== Checking for data directory ==="
+          find allure-report -type d -name "data" 2>/dev/null && echo "✓ Found data directory" || echo "✗ data directory NOT found"
+          echo ""
+          echo "=== Checking .allure directory ==="
+          ls -la .allure/ 2>/dev/null || echo "No .allure directory"
+          echo ""
+          echo "=== Full allure-report structure ==="
+          find allure-report -type f 2>/dev/null | sort
+      - name: Upload Playwright HTML report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+      - name: Upload Allure report artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: allure-report
+          path: allure-report/
+          retention-days: 30
+      - name: Upload Allure report to Pages
+        uses: actions/upload-pages-artifact@v3
+        if: ${{ !cancelled() }}
+        with:
+          path: allure-report/
+      - name: Save Allure history for next runs
+        uses: actions/cache/save@v4
+        if: ${{ !cancelled() && steps.cache-restore.outputs.cache-hit != 'true' }}
+        with:
+          path: .allure
+          key: allure-history-${{ github.ref }}-${{ github.run_number }}
+
+  deploy:
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
