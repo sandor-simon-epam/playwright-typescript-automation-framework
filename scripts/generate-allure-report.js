@@ -5,6 +5,35 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Helper function to recursively remove directory
+function removeDir(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    fs.readdirSync(dirPath).forEach((file) => {
+      const filePath = path.join(dirPath, file);
+      if (fs.lstatSync(filePath).isDirectory()) {
+        removeDir(filePath);
+      } else {
+        fs.unlinkSync(filePath);
+      }
+    });
+    fs.rmdirSync(dirPath);
+  }
+}
+
+// Helper function to recursively copy directory
+function copyDir(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  fs.readdirSync(src).forEach((file) => {
+    const srcFile = path.join(src, file);
+    const destFile = path.join(dest, file);
+    if (fs.lstatSync(srcFile).isDirectory()) {
+      copyDir(srcFile, destFile);
+    } else {
+      fs.copyFileSync(srcFile, destFile);
+    }
+  });
+}
+
 const sourceFile = '.allure/history.jsonl';
 
 // Check if allure-results exists with test results
@@ -40,7 +69,7 @@ try {
     stdio: 'pipe',
   });
   console.log(`  Files found: ${inputFiles.trim()}`);
-} catch (e) {
+} catch {
   console.log('  Could not count files');
 }
 
@@ -59,7 +88,7 @@ try {
       stdio: 'pipe',
     });
     console.log(`  Files generated: ${outputFiles.trim()}`);
-  } catch (e) {
+  } catch {
     console.log('  Could not count files');
   }
 } catch (error) {
@@ -79,11 +108,19 @@ if (!fs.existsSync('allure-report/index.html')) {
 
   if (versionedDir && fs.existsSync(`allure-report/${versionedDir}/index.html`)) {
     console.log(`  Found report in allure-report/${versionedDir}/ - flattening structure...`);
-    // Move versioned directory contents to root by renaming
+    // Move versioned directory contents to root using Node.js file operations
+    const sourceDir = `allure-report/${versionedDir}`;
     const tempDir = 'allure-report-temp';
-    execSync(`mv allure-report/${versionedDir} ${tempDir}`, { stdio: 'pipe' });
-    execSync(`rm -rf allure-report`);
-    execSync(`mv ${tempDir} allure-report`);
+
+    // Copy source to temp
+    copyDir(sourceDir, tempDir);
+
+    // Remove original allure-report
+    removeDir('allure-report');
+
+    // Move temp to allure-report
+    fs.renameSync(tempDir, 'allure-report');
+
     console.log('✓ Report structure flattened');
   } else {
     console.error('✗ Report generation failed - index.html not found');
@@ -94,7 +131,7 @@ if (!fs.existsSync('allure-report/index.html')) {
         stdio: 'pipe',
       });
       console.log(files || '(empty)');
-    } catch (e) {
+    } catch {
       console.log('allure-report directory not found or error reading');
     }
     process.exit(1);
