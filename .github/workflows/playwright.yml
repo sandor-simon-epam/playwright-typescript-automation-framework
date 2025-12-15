@@ -26,11 +26,13 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Restore Allure history for trends
+        id: cache-restore
         uses: actions/cache@v4
         with:
           path: .allure
-          key: allure-history-${{ github.ref }}
+          key: allure-history-${{ github.ref }}-${{ github.run_number }}
           restore-keys: |
+            allure-history-${{ github.ref }}-
             allure-history-
       - name: Lint code
         run: npx eslint .
@@ -51,22 +53,22 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           echo "=== Checking allure-results ==="
-          ls -la allure-results/ 2>/dev/null | head -10 || echo "No allure-results"
+          ls -lR allure-results/ 2>/dev/null | head -20 || echo "No allure-results"
           echo ""
-          echo "=== Checking allure-report ==="
-          ls -la allure-report/ 2>/dev/null || echo "No allure-report directory"
+          echo "=== Checking allure-report root ==="
+          ls -lR allure-report/ 2>/dev/null | head -30 || echo "No allure-report directory"
           echo ""
-          echo "=== Checking index.html ==="
-          if [ -f allure-report/index.html ]; then
-            echo "✓ Found index.html"
-            wc -c allure-report/index.html
-          else
-            echo "✗ index.html NOT found"
-            find allure-report -name "*.html" 2>/dev/null || echo "No HTML files found"
-          fi
+          echo "=== Checking for index.html ==="
+          find allure-report -name "index.html" 2>/dev/null && echo "✓ Found index.html" || echo "✗ index.html NOT found"
           echo ""
-          echo "=== Full directory tree ==="
-          find allure-report -type f 2>/dev/null | head -20
+          echo "=== Checking for data directory ==="
+          find allure-report -type d -name "data" 2>/dev/null && echo "✓ Found data directory" || echo "✗ data directory NOT found"
+          echo ""
+          echo "=== Checking .allure directory ==="
+          ls -la .allure/ 2>/dev/null || echo "No .allure directory"
+          echo ""
+          echo "=== Full allure-report structure ==="
+          find allure-report -type f 2>/dev/null | sort
       - name: Upload Playwright HTML report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -88,10 +90,10 @@ jobs:
           path: allure-report/
       - name: Save Allure history for next runs
         uses: actions/cache/save@v4
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.cache-restore.outputs.cache-hit != 'true' }}
         with:
           path: .allure
-          key: allure-history-${{ github.ref }}
+          key: allure-history-${{ github.ref }}-${{ github.run_number }}
 
   deploy:
     needs: test

@@ -104,6 +104,7 @@ if (!fs.existsSync('allure-report/index.html')) {
   console.log('  index.html not found at root, checking for versioned directories...');
   // Allure 3.0 may create versioned subdirectories like awesome/
   const reportDir = fs.readdirSync('allure-report');
+  console.log(`  Directories in allure-report: ${reportDir.join(', ')}`);
   const versionedDir = reportDir.find((f) => fs.statSync(`allure-report/${f}`).isDirectory());
 
   if (versionedDir && fs.existsSync(`allure-report/${versionedDir}/index.html`)) {
@@ -112,16 +113,25 @@ if (!fs.existsSync('allure-report/index.html')) {
     const sourceDir = `allure-report/${versionedDir}`;
     const tempDir = 'allure-report-temp';
 
+    console.log(`  Copying ${sourceDir} to ${tempDir}...`);
     // Copy source to temp
     copyDir(sourceDir, tempDir);
+    console.log(`  ✓ Copy complete, removing original allure-report...`);
 
     // Remove original allure-report
     removeDir('allure-report');
+    console.log(`  ✓ Original removed, renaming temp to allure-report...`);
 
     // Move temp to allure-report
     fs.renameSync(tempDir, 'allure-report');
+    console.log(`  ✓ Rename complete, verifying...`);
 
-    console.log('✓ Report structure flattened');
+    if (fs.existsSync('allure-report/index.html')) {
+      console.log('✓ Report structure flattened successfully');
+    } else {
+      console.error('✗ Flattening failed - index.html still not found');
+      process.exit(1);
+    }
   } else {
     console.error('✗ Report generation failed - index.html not found');
     console.log('\n📁 Directory structure:');
