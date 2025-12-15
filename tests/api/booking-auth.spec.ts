@@ -28,7 +28,7 @@ test.describe('Booking API - Authentication Tests', () => {
     console.log(`✓ Token received: ${token.substring(0, 20)}...`);
   });
 
-  test.only('Token can be used to create a booking', async () => {
+  test('Token can be used to create a booking', async () => {
     // Authenticate first
     const token = await bookingService.authenticate();
     expect(token).toBeTruthy();
