@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const historyDir = 'allure-report/history';
+const historyDir = 'allure-report/data/history';
 const sourceFile = '.allure/history.jsonl';
 const targetFile = path.join(historyDir, 'history.jsonl');
 
